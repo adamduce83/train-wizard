@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0c0f">
+<title>Train Wizard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root{
+    --bg:#0a0c0f; --card:#141821; --card2:#1c212c; --line:#2a3140;
+    --txt:#f4f5f7; --dim:#99a2b2; --accent:#e8743b; --accent2:#c85a28;
+    --accentInk:#1b1205; --purple:#8b6ce0;
+    --dl:#8b6ce0; --sl:#e8743b;
+  }
+  body{ background:var(--bg); color:var(--txt); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; line-height:1.45; padding-bottom:40px; }
+  .wrap{ max-width:680px; margin:0 auto; padding:0 16px; }
+
+  header{ text-align:center; padding:24px 16px 8px; }
+  header .logo-img{ height:56px; width:auto; margin-bottom:6px; }
+  header h1{ font-size:24px; font-weight:800; letter-spacing:4px; }
+  header .tagline{ font-size:19px; font-weight:800; margin-top:6px; }
+  header .tagline .o{ color:var(--accent); }
+  header .sub{ color:var(--dim); font-size:13px; margin-top:6px; }
+
+  /* Week selector */
+  .weekbar{ position:sticky; top:0; z-index:20; background:rgba(10,10,10,.92); backdrop-filter:blur(8px); padding:12px 0 10px; }
+  .weeklabel{ text-align:center; font-size:12px; color:var(--dim); text-transform:uppercase; letter-spacing:2px; margin-bottom:8px; }
+  .weeks{ display:flex; gap:8px; max-width:680px; margin:0 auto; padding:0 16px; }
+  .weeks button{ flex:1; padding:12px 0; border:1px solid var(--line); background:var(--card); color:var(--dim);
+    border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; transition:.15s; }
+  .weeks button.on{ background:var(--accent); color:var(--accentInk); border-color:var(--accent); }
+
+  /* Day tabs */
+  .tabs{ display:flex; gap:6px; overflow-x:auto; padding:14px 0 4px; }
+  .tabs button{ white-space:nowrap; padding:9px 16px; border-radius:999px; border:1px solid var(--line);
+    background:var(--card); color:var(--dim); font-size:14px; font-weight:600; cursor:pointer; }
+  .tabs button.on{ background:var(--card2); color:var(--txt); border-color:var(--accent); }
+
+  .intro{ font-size:14px; color:var(--dim); background:var(--card); border:1px solid var(--line);
+    border-radius:12px; padding:14px 16px; margin:14px 0 4px; }
+  .intro b{ color:var(--txt); }
+
+  .section-h{ font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--dim);
+    margin:22px 0 10px; padding-left:4px; }
+
+  /* Exercise card */
+  .ex{ background:var(--card); border:1px solid var(--line); border-radius:16px; margin-bottom:14px; overflow:hidden; }
+  .ex .top{ padding:14px 16px; }
+  .ex .name{ font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .tag{ font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; letter-spacing:.5px; }
+  .tag.dl{ background:rgba(74,168,255,.15); color:var(--dl); }
+  .tag.sl{ background:rgba(255,159,67,.15); color:var(--sl); }
+  .note{ color:var(--dim); font-size:13px; margin-top:4px; }
+
+  .stats{ display:flex; gap:8px; margin-top:12px; }
+  .stat{ flex:1; background:var(--card2); border-radius:10px; padding:9px 4px; text-align:center; }
+  .stat .n{ font-size:20px; font-weight:800; color:var(--accent); }
+  .stat .l{ font-size:10px; color:var(--dim); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+  .stat.rest .n{ font-size:14px; color:var(--txt); padding-top:4px; }
+
+  /* Video */
+  .video{ position:relative; aspect-ratio:16/9; background:#000; cursor:pointer; }
+  .video img{ width:100%; height:100%; object-fit:cover; display:block; opacity:.85; }
+  .video iframe{ width:100%; height:100%; border:0; display:block; }
+  .video video{ width:100%; height:100%; object-fit:contain; display:block; background:#0c0f13; }
+  .play{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .play .circ{ width:64px; height:64px; border-radius:50%; background:var(--accent);
+    display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(0,0,0,.5); }
+  .play .circ::after{ content:""; border-left:20px solid var(--accentInk); border-top:12px solid transparent;
+    border-bottom:12px solid transparent; margin-left:5px; }
+  .vlabel{ position:absolute; bottom:8px; left:10px; font-size:11px; color:#fff; background:rgba(0,0,0,.55);
+    padding:3px 8px; border-radius:6px; }
+
+  .day-screen{ display:none; }
+  .day-screen.on{ display:block; }
+  footer{ text-align:center; color:var(--dim); font-size:12px; margin-top:30px; }
+  footer a{ color:var(--accent); text-decoration:none; }
+
+  .warm-list{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:6px 0; margin-bottom:14px; }
+  .warm-list .item{ padding:11px 16px; border-bottom:1px solid var(--line); }
+  .warm-list .item:last-child{ border-bottom:0; }
+  .warm-list .t{ font-weight:600; font-size:15px; }
+  .warm-list .d{ color:var(--dim); font-size:13px; margin-top:2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <img class="logo-img" src="https://trainwizard.com.au/assets/logo-D_EJ8ZaQ.png?v=3" alt="Train Wizard logo">
+  <h1>TRAIN WIZARD</h1>
+  <p class="tagline">Stronger. Faster. <span class="o">Safer.</span></p>
+  <p class="sub">3-Week Explosive Power Program</p>
+</header>
+
+<div class="weekbar">
+  <div class="weeklabel">Select your week</div>
+  <div class="weeks" id="weeks">
+    <button data-w="1" class="on">Week 1</button>
+    <button data-w="2">Week 2</button>
+    <button data-w="3">Week 3</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="tabs" id="tabs">
+    <button data-d="warmup" class="on">🔥 Warm-Up</button>
+    <button data-d="0">Day 1</button>
+    <button data-d="1">Day 2</button>
+    <button data-d="2">Day 3</button>
+  </div>
+
+  <div id="screens"></div>
+
+  <footer>
+    Train Wizard · Tap any video to watch the demo<br>
+    Strength &amp; Conditioning for Junior Rugby League · <a href="mailto:hello@trainwizard.com.au">hello@trainwizard.com.au</a>
+  </footer>
+</div>
+
+<script>
+// ---------- DATA (from PLYOMORPH ZERO 2 PDF) ----------
+var warmup = {
+  video: "oZedb1iqQfE",
+  intro: "Do this before every workout to activate your body, reduce injury risk, and prep your nervous system. Each drill: 20–30 yards, or 10–15 reps in place if space is limited.",
+  stretches: [
+    ["Knee Hug to Lunge & Twist","Hug knee to chest, step forward into a lunge, twist toward your front leg."],
+    ["Quad Pull to Side Lunge","Pull ankle behind you to stretch the quad, then step wide into a side lunge."],
+    ["Hamstring High Kick to Reach","Kick one leg straight up, reaching across with the opposite hand."],
+    ["Open & Close the Gates","March forward, rotating knees outward (open) and inward (close)."],
+    ["World's Greatest Stretch","Step into a lunge, drop elbow inside foot, then twist and reach to the ceiling."],
+    ["Inchworms","Bend at the waist, walk hands out to a plank, then feet to hands."]
+  ],
+  moves: [
+    ["High Knees","Drive knees high moving or in place. Quick, light foot contact."],
+    ["Butt Kicks","Kick your heels toward your glutes."],
+    ["Skip for Height","Explode upward each skip. Focus on vertical power."],
+    ["Skip for Distance","Skip forward with long, powerful strides. Horizontal force."],
+    ["Side Shuffles","Stay low and move laterally with control."],
+    ["Sprint to Backpedal","Sprint forward 10–15 yards, then quick backpedal."]
+  ]
+};
+
+// reps are [week1, week2, week3]; sets always 3
+var days = [
+  { name:"Day 1", ex:[
+    {n:"Seated Vertical Jump", v:"fQAj9Adknoc", file:"seated-vertical-jump.mp4", type:"dl", reps:[5,5,6],  rest:"60-90 sec"},
+    {n:"Lateral Jumps",        v:"oSdljiUAb_A", type:"dl", reps:[10,10,12],rest:"60-90 sec"},
+    {n:"Pogo Jumps",           v:"K0qLO2PKtvA", type:"dl", reps:[10,12,14],rest:"45-60 sec"},
+    {n:"90° Hops", note:"180° total", v:"sSTNA0kCGHY", type:"sl", reps:[4,4,5],  rest:"45-60 sec"},
+    {n:"Skater Jumps",         v:"j5fIDdy8Crc", type:"sl", reps:[10,10,12],rest:"45-60 sec"},
+    {n:"SL RDL Tuck Jump",     v:"Q-XGVHnsOSU", type:"sl", reps:[3,3,5],  rest:"45-60 sec"}
+  ]},
+  { name:"Day 2", ex:[
+    {n:"180° Jumps",           v:"xpDyHz4jvq4", type:"dl", reps:[3,4,5],  rest:"60-90 sec"},
+    {n:"Lateral Object Jumps", note:"8–12 inches", v:"IetdxBLzTYk", type:"dl", reps:[10,12,12],rest:"60-90 sec"},
+    {n:"Reactive Tuck Jumps",  v:"Tss5j8lJ_cY", type:"dl", reps:[5,6,7],  rest:"60-90 sec"},
+    {n:"RFESS Toe Taps",       v:"q_z_kYHGzNs", type:"sl", reps:[10,10,12],rest:"60-90 sec"},
+    {n:"Reactive SL Butt Kick",v:"zg7LPdZ2L_Q", type:"sl", reps:[6,8,10], rest:"60-90 sec"},
+    {n:"Multi Directional Hops",v:"vzxT7X8ZC6U",type:"sl", reps:[3,3,5],  rest:"45-60 sec"}
+  ]},
+  { name:"Day 3", ex:[
+    {n:"Depth Jump", note:"use bench or sturdy chair", v:"NKIV6K9bmKI", type:"dl", reps:[5,5,5], rest:"90-120 sec"},
+    {n:"Broad Jump",           v:"6fn2ZXCh6pU", type:"dl", reps:[3,4,5],  rest:"60-90 sec"},
+    {n:"Approach Jump", note:"no weight", v:"opHmMMWxmIw", type:"dl", reps:[3,4,5],  rest:"60-90 sec"},
+    {n:"Single Leg Pogo Hops", v:"tPZNof45dQ8", type:"sl", reps:[8,10,12],rest:"45-60 sec"},
+    {n:"Linear Hops",          v:"Ho-inz98O2I", type:"sl", reps:[8,10,12],rest:"45-60 sec"},
+    {n:"Power Skips",          v:"n0mHN7j2xr8", type:"sl", reps:[5,5,6],  rest:"45-60 sec"}
+  ]}
+];
+
+// ---------- STATE ----------
+var week = 1, view = "warmup";
+
+// ---------- HELPERS ----------
+function videoBlock(id, label){
+  return '<div class="video" data-v="'+id+'">'+
+    '<img loading="lazy" src="https://i.ytimg.com/vi/'+id+'/hqdefault.jpg" alt="demo">'+
+    '<div class="play"><div class="circ"></div></div>'+
+    (label?'<div class="vlabel">'+label+'</div>':'')+
+  '</div>';
+}
+
+function localVideoBlock(file){
+  return '<div class="video localvid" style="aspect-ratio:1/1">'+
+    '<video controls playsinline preload="metadata" src="'+file+'"></video>'+
+    '<div class="vlabel">Demo</div>'+
+  '</div>';
+}
+
+function exerciseCard(e){
+  var r = e.reps[week-1];
+  var tag = e.type==="dl"
+    ? '<span class="tag dl">DOUBLE LEG</span>'
+    : '<span class="tag sl">SINGLE LEG</span>';
+  return '<div class="ex">'+
+    (e.file ? localVideoBlock(e.file) : videoBlock(e.v,"Demo"))+
+    '<div class="top">'+
+      '<div class="name">'+e.n+' '+tag+'</div>'+
+      (e.note?'<div class="note">'+e.note+'</div>':'')+
+      '<div class="stats">'+
+        '<div class="stat"><div class="n">3</div><div class="l">Sets</div></div>'+
+        '<div class="stat"><div class="n">'+r+'</div><div class="l">Reps</div></div>'+
+        '<div class="stat rest"><div class="n">'+e.rest+'</div><div class="l">Rest</div></div>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function render(){
+  var s = document.getElementById("screens");
+  var html = "";
+
+  // Warm-up screen
+  html += '<div class="day-screen'+(view==="warmup"?" on":"")+'" data-screen="warmup">';
+  html += '<div class="intro">'+warmup.intro+'</div>';
+  html += '<div style="border-radius:14px;overflow:hidden;margin-bottom:4px">'+videoBlock(warmup.video,"Warm-Up Demo")+'</div>';
+  html += '<div class="section-h">Dynamic Stretches</div><div class="warm-list">';
+  warmup.stretches.forEach(function(x){ html+='<div class="item"><div class="t">'+x[0]+'</div><div class="d">'+x[1]+'</div></div>'; });
+  html += '</div>';
+  html += '<div class="section-h">Dynamic Movements</div><div class="warm-list">';
+  warmup.moves.forEach(function(x){ html+='<div class="item"><div class="t">'+x[0]+'</div><div class="d">'+x[1]+'</div></div>'; });
+  html += '</div></div>';
+
+  // Day screens
+  days.forEach(function(d,i){
+    html += '<div class="day-screen'+(view==String(i)?" on":"")+'" data-screen="'+i+'">';
+    html += '<div class="intro"><b>'+d.name+' · Week '+week+'</b> — 3 sets each. Full effort every rep; prioritize quality, intent, and form.</div>';
+    html += '<div class="section-h">Double Leg Plyometrics</div>';
+    d.ex.filter(function(e){return e.type==="dl";}).forEach(function(e){ html+=exerciseCard(e); });
+    html += '<div class="section-h">Single Leg Plyometrics</div>';
+    d.ex.filter(function(e){return e.type==="sl";}).forEach(function(e){ html+=exerciseCard(e); });
+    html += '</div>';
+  });
+
+  s.innerHTML = html;
+  wireVideos();
+}
+
+function wireVideos(){
+  document.querySelectorAll(".video[data-v]").forEach(function(v){
+    v.addEventListener("click", function(){
+      var id = v.getAttribute("data-v");
+      v.innerHTML = '<iframe src="https://www.youtube.com/embed/'+id+'?autoplay=1&playsinline=1&rel=0" '+
+        'allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>';
+      v.style.cursor = "default";
+    });
+  });
+}
+
+// ---------- EVENTS ----------
+document.getElementById("weeks").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  week = +b.getAttribute("data-w");
+  document.querySelectorAll("#weeks button").forEach(function(x){ x.classList.toggle("on", x===b); });
+  render();
+});
+document.getElementById("tabs").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  view = b.getAttribute("data-d");
+  document.querySelectorAll("#tabs button").forEach(function(x){ x.classList.toggle("on", x===b); });
+  render();
+  window.scrollTo({top:0, behavior:"smooth"});
+});
+
+render();
+</script>
+</body>
+</html>
